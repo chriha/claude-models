@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude 5.5 Model Explorer</title>
+<meta name="description" content="Interactive comparison of Claude Haiku 5.5, Sonnet 5.5 and Opus 5.5: pricing, benchmarks, speed, effort levels and which to use for what.">
+<style>
+:root{
+  --bg:#faf9f7;--panel:#fff;--ink:#1c1b19;--mute:#6b675f;--line:#e6e2da;--accent:#c4552d;
+  --haiku:#1f9d8f;--sonnet:#d9822b;--opus:#7a56d6;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#141413;--panel:#1d1c1a;--ink:#f1eee8;--mute:#9a958a;--line:#2e2c28;--accent:#e8845c;
+  --haiku:#3fc4b5;--sonnet:#f0a050;--opus:#a48af0;--shadow:0 1px 2px rgba(0,0,0,.4);}}
+:root[data-theme=dark]{
+  --bg:#141413;--panel:#1d1c1a;--ink:#f1eee8;--mute:#9a958a;--line:#2e2c28;--accent:#e8845c;
+  --haiku:#3fc4b5;--sonnet:#f0a050;--opus:#a48af0;--shadow:0 1px 2px rgba(0,0,0,.4);}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 64px}
+h1{font-size:clamp(26px,5vw,40px);margin:0;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 16px;text-wrap:pretty}
+section{margin-top:48px}
+.num{font-variant-numeric:tabular-nums}
+header.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin:0 -16px;padding:10px 16px}
+.top .row{max-width:1100px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.hero{padding:32px 0 8px}
+.hero p{max-width:62ch;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.seg button{border:0;background:none;color:var(--mute);font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s,transform .1s}
+.seg button:active{transform:scale(.96)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.lbl{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.mcard{cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,opacity .2s;border-top:4px solid var(--c)}
+.mcard:hover{transform:translateY(-3px)}
+.mcard.off{opacity:.45}
+.mcard h3{margin:0;font-size:20px}
+.mcard code{font-size:12px;color:var(--mute)}
+.tag{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);margin:2px 4px 2px 0}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:12px 0 0;font-size:14px}
+.kv span:nth-child(odd){color:var(--mute)}
+.kv span:nth-child(even){text-align:right;font-weight:600}
+.big{font-size:30px;font-weight:700;letter-spacing:-.02em;color:var(--c)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+svg{width:100%;height:auto;display:block;overflow:visible}
+svg text{fill:var(--mute);font-size:11px;font-family:inherit}
+.bar{transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.row2{display:grid;grid-template-columns:90px 1fr 60px;gap:10px;align-items:center;margin:10px 0}
+.track{height:22px;background:color-mix(in srgb,var(--ink) 7%,transparent);border-radius:8px;overflow:hidden}
+.fill{height:100%;width:0;border-radius:8px;background:var(--c);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;padding:6px 12px;border-radius:999px;cursor:pointer;transition:all .2s}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip:active{transform:scale(.96)}
+label.sl{display:block;margin:12px 0}
+label.sl .h{display:flex;justify-content:space-between;font-size:13px;color:var(--mute)}
+label.sl b{color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--c)}
+.tasks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.task{text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;transition:transform .15s,border-color .2s,box-shadow .2s}
+.task:hover{transform:translateY(-2px)}
+.task[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
+.task small{display:block;color:var(--mute)}
+#verdict{margin-top:14px;border-left:6px solid var(--c,var(--accent));animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .12s;z-index:50;max-width:240px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+details{margin-top:12px;font-size:13px;color:var(--mute)}
+.est{font-size:11px;color:var(--mute);border:1px dashed var(--line);border-radius:6px;padding:0 5px;margin-left:4px}
+button.go{border:0;background:var(--accent);color:#fff;font:inherit;font-weight:600;padding:8px 18px;border-radius:999px;cursor:pointer;transition:transform .1s}
+button.go:active{transform:scale(.96)}
+footer{margin-top:56px;color:var(--mute);font-size:13px}
+footer a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="row">
+  <strong>Claude 5.5 Explorer</strong>
+  <div><span class="lbl">Effort</span>
+    <span class="seg" id="effortSeg"><button data-e="medium" aria-pressed="false">Medium</button><button data-e="high" aria-pressed="true">High</button></span>
+    <button class="chip" id="theme" aria-label="Toggle theme">◐</button></div>
+</div></header>
+
+<div class="wrap">
+<div class="hero">
+  <h1>Haiku, Sonnet or Opus 5.5?<br>Poke at it until the answer is obvious.</h1>
+  <p>Click model cards to include/exclude them, flip effort in the header, drag sliders, race the models. Everything below recomputes live. Data as of <b>2026-11-04</b>; <span class="est">est</span> marks my assumptions, not published numbers (see footer).</p>
+</div>
+
+<section id="overview"><h2>The three at a glance</h2><p class="sub">Click a card to toggle it in every chart.</p><div class="grid3" id="cards"></div></section>
+
+<section><h2>Capability fingerprint</h2>
+<p class="sub">Radar + benchmark bars. Benchmark axes rescaled 50–100%, speed vs. 250 tok/s, cost efficiency is log-scaled (cheaper = bigger).</p>
+<div class="two">
+  <div class="card"><svg id="radar" viewBox="-240 -160 480 320" role="img" aria-label="Radar chart"></svg><div class="legend" id="legend"></div></div>
+  <div class="card"><div class="tabs" id="benchTabs"></div><div id="bench"></div>
+    <p class="sub" style="margin-top:12px" id="benchNote"></p></div>
+</div></section>
+
+<section><h2>What does it cost?</h2>
+<p class="sub">Per task and per month. Effort changes how many thinking tokens get billed as output.</p>
+<div class="two">
+  <div class="card" id="calc">
+    <label class="sl"><span class="h">Input tokens / task <b class="num" id="vIn"></b></span><input type="range" id="sIn" min="500" max="500000" step="500" value="20000"></label>
+    <label class="sl"><span class="h">Visible output tokens / task <b class="num" id="vOut"></b></span><input type="range" id="sOut" min="100" max="32000" step="100" value="2000"></label>
+    <label class="sl"><span class="h">Thinking tokens at High effort <span class="est">est</span> <b class="num" id="vTh"></b></span><input type="range" id="sTh" min="0" max="40000" step="500" value="6000"></label>
+    <label class="sl"><span class="h">Tasks per day <b class="num" id="vN"></b></span><input type="range" id="sN" min="1" max="100000" step="1" value="1000"></label>
+    <label class="sl"><span class="h">Input served from prompt cache <b class="num" id="vC"></b></span><input type="range" id="sC" min="0" max="95" step="5" value="0"></label>
+    <label class="sl"><input type="checkbox" id="cBatch"> Batch API (−50%, async)</label>
+    <details><summary>Assumptions</summary>
+      <label class="sl"><span class="h">Medium uses this share of High thinking tokens <span class="est">est</span> <b class="num" id="vM"></b></span><input type="range" id="sM" min="10" max="100" step="5" value="60"></label>
+      Haiku cache-read price assumed 10% of input ($0.01/M) <span class="est">est</span>; Sonnet/Opus $0.20/M. Haiku long-context rate ($0.50 / $2.50) applies above 100K input tokens.</details>
+  </div>
+  <div class="card"><div id="costBars"></div><hr style="border:0;border-top:1px solid var(--line);margin:14px 0"><svg id="scatter" viewBox="0 0 420 260" role="img" aria-label="Cost vs quality"></svg>
+    <p class="sub" style="margin:6px 0 0">Cost per task vs. SWE-Bench Pro. Bubble size = speed. Top-left is the sweet spot.</p></div>
+</div></section>
+
+<section><h2>Speed race</h2>
+<p class="sub">Same answer length, each model at its measured output speed. Thinking tokens included for the current effort.</p>
+<div class="card"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+  <button class="go" id="raceBtn">▶ Race</button>
+  <label style="font-size:13px;color:var(--mute)">Answer tokens <input type="number" id="raceTok" value="2000" min="100" max="100000" step="100" style="width:90px"></label></div>
+  <div id="race"></div></div></section>
+
+<section><h2>Which model for which job?</h2>
+<p class="sub">Pick a task. Opinionated recommendations, adjusted for the effort you selected.</p>
+<div class="tasks" id="tasks"></div><div class="card" id="verdict" hidden></div></section>
+
+<section><h2>Tune it to your priorities</h2>
+<p class="sub">Weight what matters; the ranking reshuffles.</p>
+<div class="two"><div class="card">
+  <label class="sl"><span class="h">Quality <b class="num" id="wQv"></b></span><input type="range" id="wQ" min="0" max="10" value="6"></label>
+  <label class="sl"><span class="h">Speed <b class="num" id="wSv"></b></span><input type="range" id="wS" min="0" max="10" value="3"></label>
+  <label class="sl"><span class="h">Low cost <b class="num" id="wCv"></b></span><input type="range" id="wC" min="0" max="10" value="4"></label>
+</div><div class="card" id="rank"></div></div></section>
+
+<section><h2>Spec sheet</h2><div class="card" style="overflow:auto"><table id="spec"></table></div></section>
+
+<footer>
+<p><b>Sources.</b> Prices, context, max output, effort defaults: Anthropic API model table (checked 2026-11-04). Benchmarks &amp; speed: third-party write-ups and trackers, so treat as approximate —
+<a href="https://www.deeplearning.ai/the-batch/claude-fills-out-its-model-family">DeepLearning.AI</a>,
+<a href="https://artificialanalysis.ai/models/releases/comparisons/claude-sonnet-5-5-vs-claude-opus-5-5">Artificial Analysis</a>,
+<a href="https://openrouter.ai/blog/insights/claude-opus-vs-sonnet-vs-haiku/">OpenRouter</a>,
+<a href="https://computingforgeeks.com/claude-haiku-5-5-released-features-benchmarks/">ComputingForGeeks</a>.
+GPQA numbers are OpenRouter's own runs, not Anthropic's. Speed is output tokens/s (Haiku: reported 237, one independent test saw 183; Sonnet/Opus measured at max effort).</p>
+<p><b>My assumptions (<span class="est">est</span>).</b> Benchmarks are shown as published, with no per-effort scores found, so the effort toggle only changes thinking-token spend, cost and latency, not accuracy. Lower effort usually trades a little quality for fewer tokens — verify on your own tasks. Task recommendations are opinion.</p>
+<p>Edit the <code>MODELS</code> object at the top of the script in <code>index.html</code> when numbers change. Prices may differ on Bedrock/Vertex.</p>
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+// ---- DATA: update here -------------------------------------------------
+const MODELS = {
+  haiku: {name:"Haiku 5.5", id:"claude-haiku-5-5", color:"--haiku", inP:.10, outP:.50, inLong:.50, outLong:2.50, cacheP:.01,
+          ctx:"1M", maxOut:"128K", defEffort:"medium", swePro:64.8, sweML:83.7, gpqa:86.6, tps:237,
+          blurb:"Fastest and ~20–40× cheaper than Opus. Volume work."},
+  sonnet:{name:"Sonnet 5.5", id:"claude-sonnet-5-5", color:"--sonnet", inP:2, outP:10, cacheP:.20,
+          ctx:"1M", maxOut:"128K", defEffort:"high", swePro:81.3, sweML:90.3, gpqa:92.4, tps:139,
+          blurb:"The everyday workhorse for coding, agents, enterprise."},
+  opus:  {name:"Opus 5.5", id:"claude-opus-5-5", color:"--opus", inP:4, outP:20, cacheP:.20,
+          ctx:"1M", maxOut:"128K", defEffort:"medium", swePro:89.9, sweML:93.9, gpqa:90.4, tps:94,
+          blurb:"Top coding scores. Hardest problems, long agentic runs."}
+};
+const TASKS = [
+ {t:"Classify / route tickets", s:"millions/day, short", m:"haiku", e:"medium", why:"Simple, high-volume, latency-sensitive. Haiku is a fraction of the cost; even Low effort would likely hold."},
+ {t:"Extract fields from documents", s:"structured output", m:"haiku", e:"medium", why:"Extraction rarely needs deep reasoning. Use Batch for another 50% off if it can wait."},
+ {t:"Customer-support chat", s:"fast replies", m:"haiku", e:"medium", why:"Speed and cost dominate. Escalate hard cases to Sonnet."},
+ {t:"Autocomplete / inline UI", s:"sub-second feel", m:"haiku", e:"medium", why:"Highest tokens/s of the three."},
+ {t:"Everyday coding & PR review", s:"daily driver", m:"sonnet", e:"high", why:"81% SWE-Bench Pro at one-fifth of Opus' price covers most coding."},
+ {t:"Agentic multi-step tasks", s:"tools, loops", m:"sonnet", e:"high", why:"Good capability per dollar over many turns. Watch token use at max effort."},
+ {t:"Analyze 500K-token codebase/docs", s:"long context", m:"sonnet", e:"medium", why:"All three have 1M context; Sonnet balances cost on big inputs."},
+ {t:"Hard debugging / big refactor", s:"correctness matters", m:"opus", e:"high", why:"Highest SWE-Bench scores (89.9% Pro). Pay once to avoid retry loops."},
+ {t:"Architecture & design review", s:"deep judgment", m:"opus", e:"high", why:"Hardest-reasoning, highest-stakes work earns the premium."},
+ {t:"Graduate-level science Q&A", s:"GPQA-style", m:"sonnet", e:"high", why:"OpenRouter's runs show Sonnet (92.4%) edging Opus (90.4%) at a lower price."},
+ {t:"Overnight autonomous coding agent", s:"long horizon", m:"opus", e:"medium", why:"Opus at medium (its default) keeps cost sane while keeping the strongest coder."},
+ {t:"Prototype / throwaway scripts", s:"cheap & quick", m:"haiku", e:"medium", why:"Good enough, near-free. Upgrade only if it stumbles."}
+];
+const AXES = ["Coding (SWE-Pro)","Multilingual code","Reasoning (GPQA)","Speed","Cost efficiency"];
+const BENCH = {swePro:["SWE-Bench Pro","Real-world software engineering tasks (Anthropic-reported)."],
+               sweML:["SWE-bench Multilingual","Bug fixing across multiple programming languages."],
+               gpqa:["GPQA Diamond","Graduate-level science questions (OpenRouter's own run)."]};
+// ------------------------------------------------------------------------
+const $=s=>document.querySelector(s), keys=Object.keys(MODELS);
+const col=k=>`var(${MODELS[k].color})`;
+const st={effort:"high", on:{haiku:1,sonnet:1,opus:1}, bench:"swePro", task:null};
+const fmt$=v=>v>=100?"$"+Math.round(v).toLocaleString():v>=1?"$"+v.toFixed(2):v>=.01?"$"+v.toFixed(3):"$"+v.toFixed(4);
+const fmtN=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(n%1e3?1:0)+"K":""+n;
+const blended=m=>(3*m.inP+m.outP)/4;
+const tween=(a,b,ms,fn)=>{const t0=performance.now(),rm=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const f=t=>{const p=rm?1:Math.min(1,(t-t0)/ms),e=1-Math.pow(1-p,3);fn(a+(b-a)*e);if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)};
+const svgEl=(n,a={})=>{const e=document.createElementNS("http://www.w3.org/2000/svg",n);for(const k in a)e.setAttribute(k,a[k]);return e};
+const tip=$("#tip");
+function showTip(e,h){tip.innerHTML=h;tip.style.opacity=1;tip.style.left=Math.min(innerWidth-250,e.clientX+12)+"px";tip.style.top=e.clientY+14+"px"}
+const hideTip=()=>tip.style.opacity=0;
+
+// ---- cost model ---------------------------------------------------------
+function inputs(){return {inT:+$("#sIn").value,outT:+$("#sOut").value,th:+$("#sTh").value,n:+$("#sN").value,
+  cache:+$("#sC").value/100,batch:$("#cBatch").checked,medShare:+$("#sM").value/100}}
+function thinkTok(i){return i.th*(st.effort==="medium"?i.medShare:1)}
+function cost(k,i=inputs()){
+  const m=MODELS[k], long=m.inLong&&i.inT>100000, ip=long?m.inLong:m.inP, op=long?m.outLong:m.outP;
+  const out=i.outT+thinkTok(i);
+  let c=(i.inT*(1-i.cache)*ip + i.inT*i.cache*m.cacheP + out*op)/1e6;
+  if(i.batch)c*=.5;
+  return {task:c, month:c*i.n*30, out, secs:out/m.tps};
+}
+
+// ---- cards --------------------------------------------------------------
+function renderCards(){
+  $("#cards").innerHTML=keys.map(k=>{const m=MODELS[k];return `
+  <div class="card mcard ${st.on[k]?"":"off"}" data-k="${k}" style="--c:${col(k)}" tabindex="0" role="button" aria-pressed="${!!st.on[k]}">
+    <h3>${m.name}</h3><code>${m.id}</code>
+    <div style="margin-top:8px"><span class="tag">default effort: ${m.defEffort}</span><span class="tag">${m.ctx} context</span><span class="tag">${m.maxOut} output</span></div>
+    <p class="sub" style="margin:8px 0 0">${m.blurb}</p>
+    <div class="kv"><span>Input / 1M</span><span class="num">$${m.inP.toFixed(2)}</span><span>Output / 1M</span><span class="num">$${m.outP.toFixed(2)}</span>
+    <span>Speed</span><span class="num">${m.tps} tok/s</span><span>SWE-Bench Pro</span><span class="num">${m.swePro}%</span></div>
+  </div>`}).join("");
+  document.querySelectorAll(".mcard").forEach(c=>{
+    const f=()=>{const k=c.dataset.k;if(st.on[k]&&Object.values(st.on).filter(Boolean).length===1)return;st.on[k]=st.on[k]?0:1;renderAll()};
+    c.onclick=f;c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();f()}}});
+}
+
+// ---- radar --------------------------------------------------------------
+function axisVals(k){const m=MODELS[k];
+  const bm=v=>Math.max(0,(v-50)*2);
+  const cost=100*(1-Math.log(blended(m)/.2)/Math.log(50));
+  return [bm(m.swePro),bm(m.sweML),bm(m.gpqa),m.tps/250*100,Math.max(3,cost)];
+}
+const radarCur={};
+function drawRadar(){
+  const svg=$("#radar");svg.innerHTML="";const R=120,N=AXES.length;
+  const ang=i=>-Math.PI/2+i*2*Math.PI/N, pt=(i,v)=>[Math.cos(ang(i))*R*v/100,Math.sin(ang(i))*R*v/100];
+  [25,50,75,100].forEach(r=>svg.append(svgEl("polygon",{points:AXES.map((_,i)=>pt(i,r).join(",")).join(" "),fill:"none",stroke:"var(--line)"})));
+  AXES.forEach((a,i)=>{const [x,y]=pt(i,100),[lx,ly]=pt(i,122);
+    svg.append(svgEl("line",{x1:0,y1:0,x2:x,y2:y,stroke:"var(--line)"}));
+    const t=svgEl("text",{x:lx,y:ly,"text-anchor":Math.abs(lx)<8?"middle":lx>0?"start":"end","dominant-baseline":"middle"});t.textContent=a;svg.append(t)});
+  keys.forEach(k=>{
+    const p=svgEl("polygon",{fill:col(k),"fill-opacity":.18,stroke:col(k),"stroke-width":2.5,"stroke-linejoin":"round",style:"cursor:pointer;transition:opacity .3s",opacity:st.on[k]?1:0});
+    const dots=AXES.map(()=>{const d=svgEl("circle",{r:4,fill:col(k)});return d});
+    svg.append(p);dots.forEach(d=>svg.append(d));
+    const tgt=axisVals(k), from=radarCur[k]||tgt.map(()=>0);
+    tween(0,1,700,e=>{const cur=tgt.map((v,i)=>from[i]+(v-from[i])*e);
+      p.setAttribute("points",cur.map((v,i)=>pt(i,v).join(",")).join(" "));
+      dots.forEach((d,i)=>{const [x,y]=pt(i,cur[i]);d.setAttribute("cx",x);d.setAttribute("cy",y)});
+      if(e===1)radarCur[k]=tgt});
+    dots.forEach((d,i)=>{d.addEventListener("mousemove",e=>showTip(e,`<b>${MODELS[k].name}</b><br>${AXES[i]}: ${Math.round(tgt[i])}/100`));d.addEventListener("mouseleave",hideTip)});
+    dots.forEach(d=>d.style.opacity=st.on[k]?1:0);
+  });
+  $("#legend").innerHTML=keys.map(k=>`<span style="--c:${col(k)};opacity:${st.on[k]?1:.35}"><i></i>${MODELS[k].name}</span>`).join("");
+}
+
+// ---- bench bars ---------------------------------------------------------
+function renderBench(){
+  $("#benchTabs").innerHTML=Object.entries(BENCH).map(([k,v])=>`<button class="chip" data-b="${k}" aria-pressed="${st.bench===k}">${v[0]}</button>`).join("");
+  document.querySelectorAll("#benchTabs .chip").forEach(b=>b.onclick=()=>{st.bench=b.dataset.b;renderBench()});
+  const sorted=keys.filter(k=>st.on[k]).sort((a,b)=>MODELS[b][st.bench]-MODELS[a][st.bench]);
+  $("#bench").innerHTML=sorted.map(k=>`<div class="row2" style="--c:${col(k)}"><b>${MODELS[k].name}</b><div class="track"><div class="fill" data-w="${MODELS[k][st.bench]}"></div></div><span class="num"><b>${MODELS[k][st.bench]}%</b></span></div>`).join("");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll("#bench .fill").forEach(f=>f.style.width=f.dataset.w+"%")));
+  $("#benchNote").textContent=BENCH[st.bench][1];
+}
+
+// ---- cost ---------------------------------------------------------------
+function renderCost(){
+  const i=inputs();
+  $("#vIn").textContent=fmtN(i.inT);$("#vOut").textContent=fmtN(i.outT);$("#vTh").textContent=fmtN(i.th);
+  $("#vN").textContent=i.n.toLocaleString();$("#vC").textContent=(i.cache*100)+"%";$("#vM").textContent=(i.medShare*100)+"%";
+  const rows=keys.filter(k=>st.on[k]).map(k=>({k,...cost(k,i)})), mx=Math.max(...rows.map(r=>r.month));
+  const old=Object.fromEntries([...document.querySelectorAll("#costBars [data-k]")].map(e=>[e.dataset.k,+e.dataset.v]));
+  $("#costBars").innerHTML=`<div class="lbl" style="margin:0 0 4px">Monthly cost · ${st.effort} effort${i.batch?" · batch":""}</div>`+
+    rows.map(r=>`<div class="row2" style="--c:${col(r.k)};grid-template-columns:90px 1fr 90px" data-k="${r.k}" data-v="${r.month}"><b>${MODELS[r.k].name}</b>
+    <div class="track"><div class="fill" style="width:${(old[r.k]??0)/mx*100}%" data-w="${r.month/mx*100}"></div></div><span class="num"><b>${fmt$(r.month)}</b></span></div>
+    <div class="sub num" style="margin:-6px 0 4px 100px;font-size:12px">${fmt$(r.task)}/task · ${fmtN(Math.round(r.out))} out tokens · ~${r.secs<10?r.secs.toFixed(1):Math.round(r.secs)}s</div>`).join("");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll("#costBars .fill").forEach(f=>f.style.width=f.dataset.w+"%")));
+  drawScatter(i);
+}
+const scCur={};
+function drawScatter(i){
+  const svg=$("#scatter");svg.innerHTML="";const L=44,T=10,W=360,H=210;
+  const cs=keys.map(k=>cost(k,i).task), lo=Math.log10(Math.min(...cs)*.5), hi=Math.log10(Math.max(...cs)*2);
+  const X=c=>L+(Math.log10(c)-lo)/(hi-lo)*W, Y=v=>T+(1-(v-55)/(95-55))*H;
+  [60,70,80,90].forEach(v=>{svg.append(svgEl("line",{x1:L,x2:L+W,y1:Y(v),y2:Y(v),stroke:"var(--line)"}));
+    const t=svgEl("text",{x:L-6,y:Y(v)+4,"text-anchor":"end"});t.textContent=v+"%";svg.append(t)});
+  const xt=svgEl("text",{x:L+W/2,y:T+H+30,"text-anchor":"middle"});xt.textContent="cost per task (log scale) →";svg.append(xt);
+  keys.forEach((k,idx)=>{const m=MODELS[k], x=X(cs[idx]), y=Y(m.swePro), r=8+m.tps/20;
+    const g=svgEl("g",{style:"transition:opacity .3s",opacity:st.on[k]?1:.12});
+    const c=svgEl("circle",{cx:scCur[k]??x,cy:y,r,fill:col(k),"fill-opacity":.75,stroke:"var(--panel)","stroke-width":2});
+    const t=svgEl("text",{x:scCur[k]??x,y:y-r-5,"text-anchor":"middle",style:"font-weight:600;fill:var(--ink)"});t.textContent=m.name.split(" ")[0];
+    g.append(c,t);svg.append(g);
+    tween(scCur[k]??x,x,600,v=>{c.setAttribute("cx",v);t.setAttribute("x",v);scCur[k]=v});
+    c.addEventListener("mousemove",e=>showTip(e,`<b>${m.name}</b><br>${fmt$(cs[idx])}/task<br>SWE-Pro ${m.swePro}% · ${m.tps} tok/s`));c.addEventListener("mouseleave",hideTip);});
+}
+
+// ---- race ---------------------------------------------------------------
+function renderRace(){
+  $("#race").innerHTML=keys.filter(k=>st.on[k]).map(k=>`<div class="row2" style="--c:${col(k)};grid-template-columns:90px 1fr 110px" data-k="${k}"><b>${MODELS[k].name}</b><div class="track"><div class="fill" style="transition:none"></div></div><span class="num">–</span></div>`).join("");
+}
+function race(){
+  renderRace();const tok=+$("#raceTok").value||2000,i=inputs(),total=tok+thinkTok(i),t0=performance.now();
+  const rows=[...document.querySelectorAll("#race .row2")].map(r=>({k:r.dataset.k,f:r.querySelector(".fill"),l:r.querySelector("span"),done:false}));
+  const SIM=8; // 1 real second = 8 simulated seconds
+  const f=t=>{const sim=(t-t0)/1000*SIM;let alive=false;
+    rows.forEach(r=>{const need=total/MODELS[r.k].tps, p=Math.min(1,sim/need);r.f.style.width=p*100+"%";
+      r.l.textContent=p<1?Math.round(p*total).toLocaleString()+" tok":need.toFixed(1)+"s ✓";if(p<1)alive=true});
+    if(alive)requestAnimationFrame(f)};
+  requestAnimationFrame(f);
+}
+
+// ---- tasks --------------------------------------------------------------
+function renderTasks(){
+  $("#tasks").innerHTML=TASKS.map((t,i)=>`<button class="task" data-i="${i}" aria-pressed="${st.task===i}"><b>${t.t}</b><small>${t.s}</small></button>`).join("");
+  document.querySelectorAll(".task").forEach(b=>b.onclick=()=>{st.task=+b.dataset.i;renderTasks();renderVerdict()});
+}
+function renderVerdict(){
+  const v=$("#verdict");if(st.task==null){v.hidden=true;return}
+  const t=TASKS[st.task],m=MODELS[t.m],c=cost(t.m),alt=t.m==="opus"?"sonnet":t.m==="haiku"?"sonnet":"opus";
+  const ca=cost(alt);v.hidden=false;v.style.setProperty("--c",col(t.m));v.style.animation="none";v.offsetWidth;v.style.animation="";
+  const note=st.effort!==t.e?` <span class="est">you're on ${st.effort}; I'd start at <b>${t.e}</b></span>`:"";
+  v.innerHTML=`<div class="big">${m.name}</div><b>Effort: ${t.e}</b>${note}<p>${t.why}</p>
+  <p class="sub num">At your calculator settings (${st.effort}): ${fmt$(c.task)}/task, ~${c.secs.toFixed(1)}s. Alternative ${MODELS[alt].name}: ${fmt$(ca.task)}/task, ~${ca.secs.toFixed(1)}s.</p>`;
+}
+
+// ---- weights ------------------------------------------------------------
+function renderRank(){
+  const w={q:+$("#wQ").value,s:+$("#wS").value,c:+$("#wC").value};
+  $("#wQv").textContent=w.q;$("#wSv").textContent=w.s;$("#wCv").textContent=w.c;
+  const sum=(w.q+w.s+w.c)||1;
+  const sc=keys.map(k=>{const a=axisVals(k),q=(a[0]+a[1]+a[2])/3;return {k,s:(w.q*q+w.s*a[3]+w.c*a[4])/sum}}).sort((a,b)=>b.s-a.s);
+  const prev=Object.fromEntries([...document.querySelectorAll("#rank .row2")].map(e=>[e.dataset.k,e.dataset.y]));
+  $("#rank").innerHTML=sc.map((r,idx)=>`<div class="row2" data-k="${r.k}" style="--c:${col(r.k)};grid-template-columns:30px 90px 1fr 50px"><span style="font-size:20px">${["🥇","🥈","🥉"][idx]}</span><b>${MODELS[r.k].name}</b><div class="track"><div class="fill" style="width:${prev[r.k]??0}%" data-w="${r.s}"></div></div><span class="num"><b>${Math.round(r.s)}</b></span></div>`).join("")+
+    `<p class="sub" style="margin:10px 0 0">Quality = mean of three benchmarks (rescaled 50–100). Winner: <b>${MODELS[sc[0].k].name}</b> — try ${w.c>=8?"lowering":"raising"} cost weight.</p>`;
+  document.querySelectorAll("#rank .fill").forEach(f=>f.parentNode.parentNode.dataset.y=f.dataset.w);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll("#rank .fill").forEach(f=>f.style.width=f.dataset.w+"%")));
+}
+
+// ---- spec table ---------------------------------------------------------
+function renderSpec(){
+  const r=[["Model ID",m=>m.id],["Input $/1M",m=>"$"+m.inP.toFixed(2)],["Output $/1M",m=>"$"+m.outP.toFixed(2)],["Cache read $/1M",m=>"$"+m.cacheP.toFixed(2)+(m===MODELS.haiku?" (est)":"")],
+   ["Context / max output",m=>m.ctx+" / "+m.maxOut],["Default effort",m=>m.defEffort],["Effort levels",()=>"low · medium · high · xhigh · max"],
+   ["SWE-Bench Pro",m=>m.swePro+"%"],["SWE-bench Multilingual",m=>m.sweML+"%"],["GPQA Diamond",m=>m.gpqa+"%"],["Output speed",m=>m.tps+" tok/s"],
+   ["Blended $/1M (3:1)",m=>"$"+blended(m).toFixed(2)]];
+  $("#spec").innerHTML="<tr><th></th>"+keys.map(k=>`<th style="color:${col(k)}">${MODELS[k].name}</th>`).join("")+"</tr>"+
+    r.map(([n,f])=>`<tr><td>${n}</td>${keys.map(k=>`<td class="num">${f(MODELS[k])}</td>`).join("")}</tr>`).join("");
+}
+
+// ---- wiring -------------------------------------------------------------
+function renderAll(){renderCards();drawRadar();renderBench();renderCost();renderRace();renderVerdict();renderRank()}
+document.querySelectorAll("#effortSeg button").forEach(b=>b.onclick=()=>{st.effort=b.dataset.e;
+  document.querySelectorAll("#effortSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderCost();renderRace();renderVerdict()});
+["sIn","sOut","sTh","sN","sC","cBatch","sM"].forEach(id=>$("#"+id).addEventListener("input",()=>{renderCost();renderVerdict()}));
+["wQ","wS","wC"].forEach(id=>$("#"+id).addEventListener("input",renderRank));
+$("#raceBtn").onclick=race;
+$("#theme").onclick=()=>{const r=document.documentElement,d=r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+  r.dataset.theme=d==="dark"?"light":"dark"};
+renderSpec();renderTasks();renderAll();
+</script>
+</body>
+</html>
